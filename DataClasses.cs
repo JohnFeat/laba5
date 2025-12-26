@@ -43,8 +43,34 @@ namespace LibrarySystem
     public class Book
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public double BasePrice { get; set; }
+        private string _title;
+        public string Title
+        {
+            get => _title;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Название книги не может быть пустым");
+                if (value.Length > 64)
+                    throw new ArgumentException("Название книги не может превышать 64 символа");
+                _title = value;
+            }
+        }
+
+        private double _basePrice;
+        public double BasePrice
+        {
+            get => _basePrice;
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentException("Цена не может быть отрицательной");
+                if (value > 100000)
+                    throw new ArgumentException("Цена не может превышать 100 000");
+                _basePrice = value;
+            }
+        }
+
         public BorrowingStrategy Strategy { get; private set; }
         public DateTime CreatedDate { get; set; }
 
@@ -82,17 +108,32 @@ namespace LibrarySystem
 
         public void AddBook(string title, double basePrice, BorrowingStrategy strategy)
         {
+            // Валидация
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentException("Название книги не может быть пустым");
 
+            if (title.Length > 64)
+                throw new ArgumentException("Название книги не может превышать 64 символа");
+
             if (basePrice < 0)
                 throw new ArgumentException("Цена не может быть отрицательной");
+
+            if (basePrice > 100000)
+                throw new ArgumentException("Цена не может превышать 100 000");
+
+            // Проверка уникальности
+            if (GetBookByTitle(title) != null)
+                throw new ArgumentException("Книга с таким названием уже существует");
 
             _books.Add(new Book(title, basePrice, strategy));
         }
 
         public void AddBook(Book book)
         {
+            // Проверяем, нет ли уже книги с таким названием
+            if (GetBookByTitle(book.Title) != null)
+                throw new ArgumentException("Книга с таким названием уже существует");
+
             _books.Add(book);
         }
 
@@ -125,5 +166,41 @@ namespace LibrarySystem
             return _books.FirstOrDefault(b =>
                 b.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
         }
+
+        // Методы для сортировки
+        public List<Book> SortByTitle(bool ascending = true)
+        {
+            return ascending
+                ? _books.OrderBy(b => b.Title).ToList()
+                : _books.OrderByDescending(b => b.Title).ToList();
+        }
+
+        public List<Book> SortByPrice(bool ascending = true)
+        {
+            return ascending
+                ? _books.OrderBy(b => b.BasePrice).ToList()
+                : _books.OrderByDescending(b => b.BasePrice).ToList();
+        }
+
+        public List<Book> SortByPenalty(bool ascending = true)
+        {
+            return ascending
+                ? _books.OrderBy(b => b.FinalPenalty).ToList()
+                : _books.OrderByDescending(b => b.FinalPenalty).ToList();
+        }
+
+        public List<Book> SortByBorrowingType(bool ascending = true)
+        {
+            return ascending
+                ? _books.OrderBy(b => b.BorrowingType).ToList()
+                : _books.OrderByDescending(b => b.BorrowingType).ToList();
+        }
+
+        public List<Book> SortByCreatedDate(bool ascending = true)
+        {
+            return ascending
+                ? _books.OrderBy(b => b.CreatedDate).ToList()
+                : _books.OrderByDescending(b => b.CreatedDate).ToList();
+        }
     }
-}       
+}

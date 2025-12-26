@@ -47,10 +47,12 @@ namespace LibrarySystem
             this.lblTitle.Size = new System.Drawing.Size(106, 16);
             this.lblTitle.Text = "Название книги:";
 
-            // txtTitle
+            // txtTitle с ограничением 64 символа
             this.txtTitle.Location = new System.Drawing.Point(130, 17);
             this.txtTitle.Name = "txtTitle";
             this.txtTitle.Size = new System.Drawing.Size(250, 22);
+            this.txtTitle.MaxLength = 64; // Ограничение на 64 символа
+            this.txtTitle.TextChanged += new System.EventHandler(this.txtTitle_TextChanged);
 
             // lblPrice
             this.lblPrice.AutoSize = true;
@@ -59,10 +61,13 @@ namespace LibrarySystem
             this.lblPrice.Size = new System.Drawing.Size(101, 16);
             this.lblPrice.Text = "Стоимость (руб):";
 
-            // txtPrice
+            // txtPrice с ограничением ввода
             this.txtPrice.Location = new System.Drawing.Point(130, 47);
             this.txtPrice.Name = "txtPrice";
             this.txtPrice.Size = new System.Drawing.Size(100, 22);
+            this.txtPrice.MaxLength = 10; // Ограничиваем ввод
+            this.txtPrice.KeyPress += new KeyPressEventHandler(this.txtPrice_KeyPress);
+            this.txtPrice.TextChanged += new System.EventHandler(this.txtPrice_TextChanged);
 
             // chkExtended
             this.chkExtended.AutoSize = true;

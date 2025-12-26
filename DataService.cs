@@ -63,8 +63,8 @@ namespace LibrarySystem
                     }
 
                     string sql = @"
-                    INSERT INTO Books (Title, BasePrice, StrategyType, ExtensionDays)
-                    VALUES (@title, @price, @strategy, @days)";
+                    INSERT INTO Books (Title, BasePrice, StrategyType, ExtensionDays, CreatedDate)
+                    VALUES (@title, @price, @strategy, @days, @createdDate)";
 
                     using (var cmd = new SQLiteCommand(sql, conn))
                     {
@@ -72,6 +72,7 @@ namespace LibrarySystem
                         cmd.Parameters.AddWithValue("@price", book.BasePrice);
                         cmd.Parameters.AddWithValue("@strategy", strategyType);
                         cmd.Parameters.AddWithValue("@days", extensionDays);
+                        cmd.Parameters.AddWithValue("@createdDate", book.CreatedDate);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -90,7 +91,7 @@ namespace LibrarySystem
             {
                 conn.Open();
 
-                string sql = "SELECT Title, BasePrice, StrategyType, ExtensionDays FROM Books";
+                string sql = "SELECT Title, BasePrice, StrategyType, ExtensionDays, CreatedDate FROM Books";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
                 using (var reader = cmd.ExecuteReader())
@@ -101,6 +102,7 @@ namespace LibrarySystem
                         double price = reader.GetDouble(1);
                         string strategyType = reader.GetString(2);
                         int days = reader.GetInt32(3);
+                        DateTime createdDate = reader.GetDateTime(4);
 
                         BorrowingStrategy strategy;
 
@@ -113,7 +115,9 @@ namespace LibrarySystem
                             strategy = new StandardBorrowing();
                         }
 
-                        library.AddBook(title, price, strategy);
+                        var book = new Book(title, price, strategy);
+                        book.CreatedDate = createdDate;
+                        library.AddBook(book);
                     }
                 }
             }
@@ -122,6 +126,13 @@ namespace LibrarySystem
         // Добавить одну книгу
         public static void AddBook(Book book)
         {
+            // Валидация перед сохранением
+            if (book.Title.Length > 64)
+                throw new ArgumentException("Название книги слишком длинное для БД");
+
+            if (book.BasePrice > 100000)
+                throw new ArgumentException("Слишком большая стоимость для БД");
+
             using (var conn = new SQLiteConnection(connectionString))
             {
                 conn.Open();
@@ -135,8 +146,8 @@ namespace LibrarySystem
                 }
 
                 string sql = @"
-                INSERT INTO Books (Title, BasePrice, StrategyType, ExtensionDays)
-                VALUES (@title, @price, @strategy, @days)";
+                INSERT INTO Books (Title, BasePrice, StrategyType, ExtensionDays, CreatedDate)
+                VALUES (@title, @price, @strategy, @days, @createdDate)";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
@@ -144,6 +155,7 @@ namespace LibrarySystem
                     cmd.Parameters.AddWithValue("@price", book.BasePrice);
                     cmd.Parameters.AddWithValue("@strategy", strategyType);
                     cmd.Parameters.AddWithValue("@days", extensionDays);
+                    cmd.Parameters.AddWithValue("@createdDate", book.CreatedDate);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -169,7 +181,8 @@ namespace LibrarySystem
                 SET Title = @newTitle, 
                     BasePrice = @price, 
                     StrategyType = @strategy, 
-                    ExtensionDays = @days
+                    ExtensionDays = @days,
+                    CreatedDate = @createdDate
                 WHERE Title = @oldTitle";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
@@ -178,6 +191,7 @@ namespace LibrarySystem
                     cmd.Parameters.AddWithValue("@price", book.BasePrice);
                     cmd.Parameters.AddWithValue("@strategy", strategyType);
                     cmd.Parameters.AddWithValue("@days", extensionDays);
+                    cmd.Parameters.AddWithValue("@createdDate", book.CreatedDate);
                     cmd.Parameters.AddWithValue("@oldTitle", oldTitle);
                     cmd.ExecuteNonQuery();
                 }
@@ -220,4 +234,4 @@ namespace LibrarySystem
             }
         }
     }
-}   
+}
